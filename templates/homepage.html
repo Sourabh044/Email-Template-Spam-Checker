@@ -1,0 +1,136 @@
+{% extends "_base.html" %}
+{% block title %}Email Analysis{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <form id="emailForm">
+        <div class="form-floating mb-3">
+            <textarea class="form-control" placeholder="Enter Email Content" id="emailContent" name="email_content" style="height: 200px;" required></textarea>
+            <label for="emailContent">Email Content</label>
+        </div>
+        <button type="submit" id="submitBtn" class="btn btn-primary">Analyze</button>
+    </form>
+
+    <div id="resultSection" class="mt-4" style="display: none;">
+        <h4>Results:</h4>
+        <div id="parsedResults"></div>
+    </div>
+</div>
+
+
+<script>
+    
+    function parseQualityOutput(text) {
+    const spamScoreMatch = text.match(/Spam Score:\s*(\d+)/);
+    const spammyMatch = text.match(/Spammy Phrases:\s*(.+)/);
+    const goodMatch = text.match(/Good Phrases:\s*(.+)/);
+    const commentsMatch = text.match(/Comments:\s*(.+)/s);
+
+    return {
+        spam_score: spamScoreMatch ? spamScoreMatch[1] : "N/A",
+        spammy: spammyMatch ? spammyMatch[1].split(',').map(x => x.trim()) : [],
+        good: goodMatch && goodMatch[1].toLowerCase() !== "none" ? goodMatch[1].split(',').map(x => x.trim()) : [],
+        comments: commentsMatch ? commentsMatch[1].trim() : "No comments"
+    };
+}
+    const form = document.getElementById("emailForm");
+    const textarea = document.getElementById("emailContent");
+    const button = document.getElementById("submitBtn");
+    const resultSection = document.getElementById("resultSection");
+    const resultsOutput = document.getElementById("resultsOutput");
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        // Disable input and button
+        textarea.disabled = true;
+        button.disabled = true;
+        button.textContent = "Analyzing...";
+
+        try {
+            const response = await fetch("/analyze-email", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email_content: textarea.value
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Parse the 'quality_check' response manually
+                const parsedQuality = parseQualityOutput(data.quality_check);
+
+                // Extract the structured rewritten response
+                const rewritten = data.rewritten_email.rewritten_email;
+                const improvements = data.rewritten_email.key_improvements || [];
+
+                // Build HTML dynamically
+                parsedResults.innerHTML = `
+                    <div class="mb-3">
+                        <h5 class="text-primary">Spam Score: <span class="badge bg-danger">${parsedQuality.spam_score}</span></h5>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Spammy Phrases:</strong><br>
+                        ${parsedQuality.spammy.map(word => `<span class="badge bg-warning text-dark me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Good Phrases:</strong><br>
+                        ${parsedQuality.good.map(word => `<span class="badge bg-success me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <strong>Comments:</strong><br> ${parsedQuality.comments}
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">Rewritten Email</div>
+                        <div class="card-body">
+                            <pre class="mb-0" style="white-space: pre-wrap;">${rewritten}</pre>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">Key Improvements</div>
+                        <div class="card-body">
+                            ${
+                                improvements.length > 0
+                                    ? improvements.map(imp => `
+                                        <div class="mb-3">
+                                            <h6 class="fw-bold mb-1">${imp.title}</h6>
+                                            <p class="mb-0 text-muted">${imp.reason}</p>
+                                        </div>
+                                    `).join('')
+                                    : '<p class="text-muted mb-0"><em>No improvements returned.</em></p>'
+                            }
+                        </div>
+                    </div>
+                `;
+
+                resultSection.style.display = "block";
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            else {
+                resultsOutput.textContent = "Error: " + (data.error || "Something went wrong");
+                resultSection.style.display = "block";
+            }
+        } catch (error) {
+            resultsOutput.textContent = "Network error: " + error.message;
+            resultSection.style.display = "block";
+        }
+
+        // Re-enable input and button
+        textarea.disabled = false;
+        button.disabled = false;
+        button.textContent = "Analyze";
+        resultSection.focus()
+    });
+</script>
+
+
+{% endblock content %}

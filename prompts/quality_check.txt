@@ -1,0 +1,16 @@
+"""
+You are an expert email quality checker.
+Analyze the following email and give a 'Spam Score' between 0 (not spammy) and 100 (very spammy).
+
+Also, list down the good and spammy words/phrases used in the email.
+
+Email Content:
+------------------
+{email_content}
+
+Return response in this format:
+Spam Score: <value>
+Spammy Phrases: <list>
+Good Phrases: <list>
+Comments: <short feedback>
+"""

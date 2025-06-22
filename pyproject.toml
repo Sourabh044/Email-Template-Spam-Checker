@@ -1,0 +1,13 @@
+[project]
+name = "email-template-spam-checker"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1.1",
+    "langchain>=0.3.26",
+    "langchain-community>=0.3.26",
+    "langchain-google-genai>=2.1.5",
+    "python-dotenv>=1.1.0",
+]
