@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, jsonify
-from utils import get_llm, get_parallel_chain
+from chains import  get_llm , create_email_quality_checker_chain , create_email_rewriter_chain
+from utils import is_html_email
 from llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
-
+from langchain_core.runnables import RunnableParallel
+import os
 app = Flask(__name__)
-
 
 @app.route("/")
 def home():
@@ -20,7 +21,20 @@ def analyze_email():
 
     try:
         llm = get_llm()
-        chain = get_parallel_chain(llm)
+
+        quality_checker = create_email_quality_checker_chain(llm)
+
+        if is_html_email(email_content):
+            rewriter = create_email_rewriter_chain(llm, template_path=os.path.join("app", "prompts", "email_rewrite_html.txt"))
+        else:
+            rewriter = create_email_rewriter_chain(llm)
+
+        chain = RunnableParallel(
+            {
+                "quality_check": quality_checker,
+                "rewritten_email": rewriter,
+            }
+        )
         result = chain.invoke({"email_content": email_content})
         # print(result)  # Debugging output
 

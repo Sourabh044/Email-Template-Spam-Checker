@@ -1,6 +1,11 @@
 {% extends "_base.html" %}
 {% block title %}Email Analysis{% endblock title %}
 
+{% block extra_head %}
+<script src="https://cdn.tiny.cloud/1/92mosh0pocxlyqaqq283z7fo78ooaah63cmezpmdlkzoiama/tinymce/7/tinymce.min.js" referrerpolicy="origin" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@tinymce/tinymce-webcomponent/dist/tinymce-webcomponent.min.js"></script>
+{% endblock extra_head %}
+
 {% block content %}
 <div class="container mt-4">
     <form id="emailForm">
@@ -16,19 +21,55 @@
         <div id="parsedResults"></div>
     </div>
 
-    <div id="resultsErrorOutput" style="display: none;"></div>
+    <!-- Editor Container -->
+    <div class="mt-4 d-none" id="editorContainer">
+        <label for="emailEditor" class="form-label">Rewritten Email (Editable)</label>
+        <textarea id="emailEditor" class="form-control" rows="10"></textarea>
+        <button class="btn btn-sm btn-outline-primary mt-2" onclick="updatePreview()">Preview Changes</button>
+    </div>
 
+    <!-- Live Preview -->
+    <div class="mt-4 d-none" id="livePreviewContainer">
+        <label class="form-label">Live Preview</label>
+        <iframe id="emailPreview" class="w-100 border" style="height: 400px;"></iframe>
+    </div>
+
+    <div id="resultsErrorOutput" style="display: none;"></div>
 
 </div>
 
 
 <script>
+
+document.addEventListener("DOMContentLoaded", function () {
+  tinymce.init({
+    selector: '#emailEditor',
+    plugins: [
+      // Core features
+      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists',
+      'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+    ],
+
+    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+
+    tinycomments_mode: 'embedded',
+    tinycomments_author: 'Sourabh',
+});
+});
+
+
+    function updatePreview() {
+            const html = tinymce.get('emailEditor').getContent();
+            document.getElementById('emailPreview').srcdoc = html;
+    }
     
     function parseQualityOutput(text) {
     const spamScoreMatch = text.match(/Spam Score:\s*(\d+)/);
     const spammyMatch = text.match(/Spammy Phrases:\s*(.+)/);
     const goodMatch = text.match(/Good Phrases:\s*(.+)/);
     const commentsMatch = text.match(/Comments:\s*(.+)/s);
+    const livePreviewContainer = document.getElementById("livePreviewContainer");
+    const editorContainer = document.getElementById("editorContainer");
 
     return {
         spam_score: spamScoreMatch ? spamScoreMatch[1] : "N/A",
@@ -95,7 +136,7 @@
                         <strong>Comments:</strong><br> ${parsedQuality.comments}
                     </div>
 
-                    <div class="card mb-4">
+                    <div class="card mb-4 d-none">
                         <div class="card-header bg-success text-white">Rewritten Email</div>
                         <div class="card-body">
                             <pre class="mb-0" style="white-space: pre-wrap;">${rewritten}</pre>
@@ -120,7 +161,15 @@
                 `;
 
                 resultSection.style.display = "block";
+                
+                // Populate TinyMCE editor after receiving response
+                //console.log('updating tinymce editor with:', rewritten);
+                //tinymce.get('emailEditor').setContent(rewritten);
+                updatePreview(); // Optional: show preview immediately
+                editorContainer.classList.remove("d-none");
+                livePreviewContainer.classList.remove("d-none");
                 resultSection.scrollIntoView({ behavior: 'smooth' });
+
             }
             else {
                 resultsErrorOutput.textContent = "Error: " + (data.error || "Something went wrong");
