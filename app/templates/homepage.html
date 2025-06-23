@@ -13,6 +13,7 @@
             <textarea class="form-control" placeholder="Enter Email Content" id="emailContent" name="email_content" style="height: 200px;" required></textarea>
             <label for="emailContent">Email Content</label>
         </div>
+        <input type="hidden" id="originalHtmlInput" name="originalHtml">
         <button type="submit" id="submitBtn" class="btn btn-primary">Analyze</button>
     </form>
 
@@ -26,6 +27,7 @@
         <label for="emailEditor" class="form-label">Rewritten Email (Editable)</label>
         <textarea id="emailEditor" class="form-control" rows="10"></textarea>
         <button class="btn btn-sm btn-outline-primary mt-2" onclick="updatePreview()">Preview Changes</button>
+        <button class="btn btn-sm btn-outline-warning mt-2 ms-2" onclick="regenerateEmail()">Regenerate</button>
     </div>
 
     <!-- Live Preview -->
@@ -41,21 +43,72 @@
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function () {
-  tinymce.init({
-    selector: '#emailEditor',
-    plugins: [
-      // Core features
-      'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists',
-      'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
-    ],
+    document.addEventListener("DOMContentLoaded", function () {
+    tinymce.init({
+        selector: '#emailEditor',
+        plugins: [
+        // Core features
+        'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists',
+        'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+        ],
 
-    toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+        toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
 
-    tinycomments_mode: 'embedded',
-    tinycomments_author: 'Sourabh',
-});
-});
+        tinycomments_mode: 'embedded',
+        tinycomments_author: 'Sourabh',
+    });
+    });
+
+
+    async function regenerateEmail() {
+        //const currentHTML = tinymce.get('emailEditor').getContent();
+        const currentHTML = document.getElementById("originalHtmlInput").value;
+        const improvementsCard = document.getElementById("improvementsCard");
+        const originalHtmlInput = document.getElementById("originalHtmlInput");
+        try {
+            showLoader();
+            const response = await fetch('/regenerate-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ html_content: currentHTML })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Update editor content
+
+                tinymce.get('emailEditor').setContent(data.rewritten_email);
+                updatePreview();
+                improvementsCard.innerHTML = `
+                <div class="card-header bg-primary text-white">Key Improvements</div>
+                        <div class="card-body">
+                            ${
+                                data.improvements.length > 0
+                                    ? data.improvements.map(imp => `
+                                        <div class="mb-3">
+                                            <h6 class="fw-bold mb-1">${imp.title}</h6>
+                                            <p class="mb-0 text-muted">${imp.reason}</p>
+                                        </div>
+                                    `).join('')
+                                    : '<p class="text-muted mb-0"><em>No improvements returned.</em></p>'
+                            }
+                        </div>
+                `
+                originalHtmlInput.value = data.rewritten_email || "";
+                hideLoader();
+            } else {
+                alert("Regeneration failed: " + (data.error || "Unknown error"));
+                hideLoader();
+            }
+        } catch (error) {
+            alert("Network error: " + error.message);
+            hideLoader();
+        }
+    }
+
 
 
     function updatePreview() {
@@ -64,34 +117,37 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     
     function parseQualityOutput(text) {
-    const spamScoreMatch = text.match(/Spam Score:\s*(\d+)/);
-    const spammyMatch = text.match(/Spammy Phrases:\s*(.+)/);
-    const goodMatch = text.match(/Good Phrases:\s*(.+)/);
-    const commentsMatch = text.match(/Comments:\s*(.+)/s);
-    const livePreviewContainer = document.getElementById("livePreviewContainer");
-    const editorContainer = document.getElementById("editorContainer");
-
-    return {
-        spam_score: spamScoreMatch ? spamScoreMatch[1] : "N/A",
-        spammy: spammyMatch ? spammyMatch[1].split(',').map(x => x.trim()) : [],
-        good: goodMatch && goodMatch[1].toLowerCase() !== "none" ? goodMatch[1].split(',').map(x => x.trim()) : [],
-        comments: commentsMatch ? commentsMatch[1].trim() : "No comments"
-    };
-}
+        const spamScoreMatch = text.match(/Spam Score:\s*(\d+)/);
+        const spammyMatch = text.match(/Spammy Phrases:\s*(.+)/);
+        const goodMatch = text.match(/Good Phrases:\s*(.+)/);
+        const commentsMatch = text.match(/Comments:\s*(.+)/s);
+        const livePreviewContainer = document.getElementById("livePreviewContainer");
+        const editorContainer = document.getElementById("editorContainer");
+        
+        return {
+            spam_score: spamScoreMatch ? spamScoreMatch[1] : "N/A",
+            spammy: spammyMatch ? spammyMatch[1].split(',').map(x => x.trim()) : [],
+            good: goodMatch && goodMatch[1].toLowerCase() !== "none" ? goodMatch[1].split(',').map(x => x.trim()) : [],
+            comments: commentsMatch ? commentsMatch[1].trim() : "No comments"
+        };
+    }
+    
+    
     const form = document.getElementById("emailForm");
     const textarea = document.getElementById("emailContent");
     const button = document.getElementById("submitBtn");
     const resultSection = document.getElementById("resultSection");
     const resultsErrorOutput = document.getElementById("resultsErrorOutput");
+    const originalHtmlInput = document.getElementById("originalHtmlInput");
 
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
-
+        showLoader();
         // Disable input and button
         textarea.disabled = true;
         button.disabled = true;
         button.textContent = "Analyzing...";
-
+        
         try {
             const response = await fetch("/analyze-email", {
                 method: "POST",
@@ -114,6 +170,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const rewritten_data = JSON.parse(data.rewritten_email)
                 const rewritten = rewritten_data.rewritten_email;
                 const improvements = rewritten_data.key_improvements || [];
+                originalHtmlInput.value = rewritten || "";
+
                 console.log(parsedQuality)
                 console.log(rewritten_data)
                 // Build HTML dynamically
@@ -138,12 +196,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     <div class="card mb-4 d-none">
                         <div class="card-header bg-success text-white">Rewritten Email</div>
-                        <div class="card-body">
-                            <pre class="mb-0" style="white-space: pre-wrap;">${rewritten}</pre>
+                        <div class="card-body" >
+                            <pre class="mb-0" style="white-space: pre-wrap;" id="rewrittenEmailContent">${rewritten}</pre>
                         </div>
                     </div>
 
-                    <div class="card">
+                    <div class="card" id="improvementsCard">
                         <div class="card-header bg-primary text-white">Key Improvements</div>
                         <div class="card-body">
                             ${
@@ -164,12 +222,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 // Populate TinyMCE editor after receiving response
                 //console.log('updating tinymce editor with:', rewritten);
-                //tinymce.get('emailEditor').setContent(rewritten);
+                tinymce.get('emailEditor').setContent(rewritten);
                 updatePreview(); // Optional: show preview immediately
                 editorContainer.classList.remove("d-none");
                 livePreviewContainer.classList.remove("d-none");
                 resultSection.scrollIntoView({ behavior: 'smooth' });
-
             }
             else {
                 resultsErrorOutput.textContent = "Error: " + (data.error || "Something went wrong");
@@ -184,6 +241,7 @@ document.addEventListener("DOMContentLoaded", function () {
         textarea.disabled = false;
         button.disabled = false;
         button.textContent = "Analyze";
+        hideLoader();
         resultSection.focus()
     });
 </script>

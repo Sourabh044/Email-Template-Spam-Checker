@@ -13,7 +13,7 @@ Avoid:
 - Overly urgent language (like “Act now!”)
 
 Use friendly, polite, and professional tone.
-
+Respond ONLY with raw JSON. Do not wrap the response in markdown blocks like ```json. Make sure all double quotes in HTML attributes are properly escaped
 {format_instructions}
 
 Original HTML Email:

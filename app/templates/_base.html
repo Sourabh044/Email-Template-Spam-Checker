@@ -7,6 +7,23 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     <!-- <script src="{{ url_for('static', filename='js/btColorMode.js') }}"></script> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.13.1/font/bootstrap-icons.min.css" integrity="sha512-t7Few9xlddEmgd3oKZQahkNI4dS6l80+eGEzFQiqtyVYdvcSG2D3Iub77R20BdotfRPA9caaRkg1tyaJiPmO0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+      .backdrop-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1050; /* above everything including modal */
+        background-color: rgba(0, 0, 0, 0.4); /* semi-transparent background */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+    
+    
     {% block extra_head %}  {% endblock extra_head %}
     </head>
   <body>
@@ -16,6 +33,26 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js" integrity="sha384-7qAoOXltbVP82dhxHAUje59V5r2YsVfBafyUDxEdApLPmcdhBPg1DKg1ERo0BZlK" crossorigin="anonymous"></script>
     
-    {% block extra_footer_scripts %}{% endblock extra_footer_scripts %}
+    {% block extra_footer_scripts %}
+    
+    <script>
+        function showLoader() {
+          document.getElementById('backdropLoader').classList.remove('d-none');
+        }
+
+        function hideLoader() {
+          document.getElementById('backdropLoader').classList.add('d-none');
+        }
+    </script>
+    
+    
+    {% endblock extra_footer_scripts %}
+
+    <!-- Fullscreen Loader Backdrop -->
+    <div id="backdropLoader" class="backdrop-loader d-none">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
 </body>
 </html>

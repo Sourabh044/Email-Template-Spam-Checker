@@ -52,5 +52,29 @@ def analyze_email():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/regenerate-email', methods=['POST'])
+def regenerate_email():
+    try:
+        data = request.get_json()
+        html_content = data.get('html_content')
+        print('------------------------------------------ html_content:', html_content)
+        if not html_content:
+            return jsonify({'error': 'Missing html_content'}), 400
+        llm = get_llm()
+        # Your LLM logic to regenerate a clean version
+        if is_html_email(html_content):
+            print('here')
+            rewriter = create_email_rewriter_chain(llm, template_path=os.path.join("app", "prompts", "email_rewrite_html.txt"))
+        else:
+            rewriter = create_email_rewriter_chain(llm)
+        result:RewrittenEmailOutput = rewriter.invoke({"email_content": html_content})
+        print('------------------------',result.rewritten_email)
+        return jsonify({
+            'rewritten_email': result.rewritten_email,
+            'improvements': [im.model_dump() for im in result.key_improvements],
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == "__main__":
     app.run(debug=True)
