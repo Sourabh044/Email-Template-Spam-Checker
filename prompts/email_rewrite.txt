@@ -13,19 +13,7 @@ Avoid:
 
 Use friendly, polite, and professional tone.
 
-Return a JSON object with the following format:
-
-
-{{
-  "rewritten_email": "<The improved email>",
-  "key_improvements": [
-    {{
-      "title": "<What was improved>",
-      "reason": "<Why it improves the email>"
-    }},
-    ...
-  ]
-}}
+{format_instructions}
 
 Original Email:
 ------------------

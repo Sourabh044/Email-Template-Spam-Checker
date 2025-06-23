@@ -15,6 +15,10 @@
         <h4>Results:</h4>
         <div id="parsedResults"></div>
     </div>
+
+    <div id="resultsErrorOutput" style="display: none;"></div>
+
+
 </div>
 
 
@@ -37,7 +41,7 @@
     const textarea = document.getElementById("emailContent");
     const button = document.getElementById("submitBtn");
     const resultSection = document.getElementById("resultSection");
-    const resultsOutput = document.getElementById("resultsOutput");
+    const resultsErrorOutput = document.getElementById("resultsErrorOutput");
 
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -62,12 +66,15 @@
 
             if (response.ok) {
                 // Parse the 'quality_check' response manually
-                const parsedQuality = parseQualityOutput(data.quality_check);
+                //const parsedQuality = parseQualityOutput(data.quality_check);
+                const parsedQuality = JSON.parse(data.quality_check);
 
                 // Extract the structured rewritten response
-                const rewritten = data.rewritten_email.rewritten_email;
-                const improvements = data.rewritten_email.key_improvements || [];
-
+                const rewritten_data = JSON.parse(data.rewritten_email)
+                const rewritten = rewritten_data.rewritten_email;
+                const improvements = rewritten_data.key_improvements || [];
+                console.log(parsedQuality)
+                console.log(rewritten_data)
                 // Build HTML dynamically
                 parsedResults.innerHTML = `
                     <div class="mb-3">
@@ -76,12 +83,12 @@
 
                     <div class="mb-3">
                         <strong>Spammy Phrases:</strong><br>
-                        ${parsedQuality.spammy.map(word => `<span class="badge bg-warning text-dark me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
+                        ${parsedQuality.spammy_phrases.map(word => `<span class="badge bg-warning text-dark me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
                     </div>
 
                     <div class="mb-3">
                         <strong>Good Phrases:</strong><br>
-                        ${parsedQuality.good.map(word => `<span class="badge bg-success me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
+                        ${parsedQuality.good_phrases.map(word => `<span class="badge bg-success me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
                     </div>
 
                     <div class="alert alert-info" role="alert">
@@ -116,12 +123,12 @@
                 resultSection.scrollIntoView({ behavior: 'smooth' });
             }
             else {
-                resultsOutput.textContent = "Error: " + (data.error || "Something went wrong");
-                resultSection.style.display = "block";
+                resultsErrorOutput.textContent = "Error: " + (data.error || "Something went wrong");
+                resultsErrorOutput.style.display = "block";
             }
         } catch (error) {
-            resultsOutput.textContent = "Network error: " + error.message;
-            resultSection.style.display = "block";
+            resultsErrorOutput.textContent = "Network error: " + error.message;
+            resultsErrorOutput.style.display = "block";
         }
 
         // Re-enable input and button

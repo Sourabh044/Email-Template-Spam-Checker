@@ -1,17 +1,18 @@
+import json
+import re
 import os
+from llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableParallel
-import json
-import re 
+from langchain_core.output_parsers import PydanticOutputParser
+
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
 
-GOOGLE_API_KEY  = os.environ.get("GOOGLE_API_KEY")
-
-
-def get_llm(model="gemma-3n-e4b-it",temperature=0.7,api_key=GOOGLE_API_KEY):
+def get_llm(model="gemma-3n-e4b-it", temperature=0.7, api_key=GOOGLE_API_KEY):
     """Returns Gemini-Pro LLM instance via LangChain."""
-    return ChatGoogleGenerativeAI(model=model, temperature=temperature,api_key=api_key)
+    return ChatGoogleGenerativeAI(model=model, temperature=temperature, api_key=api_key)
 
 
 def load_template_from_file(file_path: str) -> str:
@@ -48,11 +49,16 @@ def create_email_quality_checker_chain(llm=None):
     along with explanation.
     """
     llm = llm or get_llm()
+    parser = PydanticOutputParser(pydantic_object=EmailQualityOutput)
     prompt = PromptTemplate(
         input_variables=["email_content"],
-        template=load_template_from_file(os.path.join("prompts", "quality_check.txt")),
+        template=load_template_from_file(
+            os.path.join("prompts", "quality_check.txt")),
+        partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    return prompt | llm
+
+
+    return prompt | llm | parser
 
 
 def create_email_rewriter_chain(llm=None):
@@ -60,11 +66,14 @@ def create_email_rewriter_chain(llm=None):
     Chain that takes a spammy email and rewrites it to improve quality and reduce spam.
     """
     llm or get_llm()
+    parser = PydanticOutputParser(pydantic_object=RewrittenEmailOutput)
     prompt = PromptTemplate(
         input_variables=["email_content"],
         template=load_template_from_file(os.path.join("prompts", "email_rewrite.txt")),
+        partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    return prompt | llm
+    return prompt | llm | parser
+
 
 def get_parallel_chain(llm=None):
     """
@@ -89,7 +98,6 @@ def run_both_chains(email_content):
     return get_parallel_chain().invoke({"email_content": email_content})
 
 
-
 def clean_llm_response(raw_output: str) -> dict:
     """
     Cleans and parses a potentially double-escaped JSON response from an LLM.
@@ -97,7 +105,8 @@ def clean_llm_response(raw_output: str) -> dict:
     try:
         # Step 1: Strip newlines and whitespace
         raw_output = raw_output.strip()
-        match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw_output, re.DOTALL)
+        match = re.search(
+            r"```(?:json)?\s*(\{.*?\})\s*```", raw_output, re.DOTALL)
         if match:
             json_str = match.group(1)
             return json.loads(json_str)
@@ -134,7 +143,6 @@ def main():
     result = run_both_chains(email_text)
     print("Quality Check Result:", result["quality_check"].content)
     print("Rewritten Email:", result["rewritten_email"].content)
-
 
 
 if __name__ == "__main__":

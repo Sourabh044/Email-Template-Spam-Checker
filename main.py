@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify
-from utils import get_llm, get_parallel_chain , clean_llm_response
+from utils import get_llm, get_parallel_chain
+from llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
 
 app = Flask(__name__)
 
@@ -21,19 +22,19 @@ def analyze_email():
         llm = get_llm()
         chain = get_parallel_chain(llm)
         result = chain.invoke({"email_content": email_content})
-        # print(result.keys())  # Debugging output
+        # print(result)  # Debugging output
+
+        raw_quality_check: EmailQualityOutput | str = result.get("quality_check", "")
+        raw_rewritten: RewrittenEmailOutput | str = result.get("rewritten_email", "")
+
         response = {
-            "quality_check": result["quality_check"].content,   
+            "quality_check": raw_quality_check.model_dump_json(),
+            "rewritten_email": raw_rewritten.model_dump_json()
         }
-
-        raw_rewritten = result.get("rewritten_email", "")
-        structured_output = clean_llm_response(raw_rewritten.content)
-
-        response["rewritten_email"] = structured_output
 
         return jsonify(response), 200
     except Exception as e:
-        raise e
+        # raise e
         return jsonify({"error": str(e)}), 500
 
 
