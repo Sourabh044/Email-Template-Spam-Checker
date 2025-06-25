@@ -24,10 +24,15 @@
 
     <!-- Editor Container -->
     <div class="mt-4 d-none" id="editorContainer">
-        <label for="emailEditor" class="form-label">Rewritten Email (Editable)</label>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <label for="emailEditor" class="form-label mb-0">Rewritten Email (Editable)</label>
+            <div>
+                <button class="btn btn-sm btn-primary me-2" onclick="updatePreview()"> <i class="bi bi-easel"></i> Preview Changes</button>
+                <button class="btn btn-sm btn-secondary me-2" onclick="copyOriginalHtml()"> <i class="bi bi-copy"></i> Copy</button>
+                <button class="btn btn-sm btn-warning" onclick="regenerateEmail()"> <i class="bi bi-arrow-clockwise"></i> Regenerate</button>
+            </div>
+        </div>
         <textarea id="emailEditor" class="form-control" rows="10"></textarea>
-        <button class="btn btn-sm btn-outline-primary mt-2" onclick="updatePreview()">Preview Changes</button>
-        <button class="btn btn-sm btn-outline-warning mt-2 ms-2" onclick="regenerateEmail()">Regenerate</button>
     </div>
 
     <!-- Live Preview -->
@@ -100,11 +105,11 @@
                 originalHtmlInput.value = data.rewritten_email || "";
                 hideLoader();
             } else {
-                alert("Regeneration failed: " + (data.error || "Unknown error"));
+                toastr['error']("Regeneration failed: " + (data.error || "Unknown error"));
                 hideLoader();
             }
         } catch (error) {
-            alert("Network error: " + error.message);
+            toastr['error']("Network error: " + error.message);
             hideLoader();
         }
     }
@@ -132,6 +137,19 @@
         };
     }
     
+    function copyOriginalHtml() {
+        const input = document.getElementById("originalHtmlInput");
+        if (input) {
+            navigator.clipboard.writeText(input.value)
+                .then(() => {
+                    toastr['success']("Copied to Clipboard")
+                })
+                .catch(err => {
+                    console.error("Copy failed:", err);
+                    toastr["error"]("Failed to copy.");
+                });
+        }
+    }
     
     const form = document.getElementById("emailForm");
     const textarea = document.getElementById("emailContent");

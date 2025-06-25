@@ -1,7 +1,7 @@
 You are an email marketing expert.
 
 You are given an HTML email. Your job is to:
-- Retain the **entire structure and CSS** (do not touch any `<style>`, inline styles, or layout).
+- Retain the **entire structure and CSS** (do not touch any `<style>`, inline styles, or layout),and keep them in your output.
 - Rewrite only the **text content** inside elements (like headings, paragraphs, links).
 - Avoid spammy words like "FREE", "WIN NOW", "CLICK HERE", etc.
 - Maintain HTML format exactly.
@@ -12,8 +12,8 @@ Avoid:
 - Excessive exclamations
 - Overly urgent language (like “Act now!”)
 
-Use friendly, polite, and professional tone.
-Respond ONLY with raw JSON. Do not wrap the response in markdown blocks like ```json. Make sure all double quotes in HTML attributes are properly escaped
+Use friendly, polite, professional tone and generate HTML.
+Respond ONLY with raw JSON. Do not wrap the response in markdown blocks like ```json.
 {format_instructions}
 
 Original HTML Email:

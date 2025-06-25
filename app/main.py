@@ -57,13 +57,12 @@ def regenerate_email():
     try:
         data = request.get_json()
         html_content = data.get('html_content')
-        print('------------------------------------------ html_content:', html_content)
+        # print('------------------------------------------ html_content:', html_content)
         if not html_content:
             return jsonify({'error': 'Missing html_content'}), 400
         llm = get_llm()
         # Your LLM logic to regenerate a clean version
         if is_html_email(html_content):
-            print('here')
             rewriter = create_email_rewriter_chain(llm, template_path=os.path.join("app", "prompts", "email_rewrite_html.txt"))
         else:
             rewriter = create_email_rewriter_chain(llm)
