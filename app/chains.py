@@ -21,6 +21,7 @@ def create_email_quality_checker_chain(llm=None, template_path=None):
     along with explanation.
     """
     llm = llm or get_llm()
+    llm = llm.with_structured_output(EmailQualityOutput)
     parser = PydanticOutputParser(pydantic_object=EmailQualityOutput)
     if not template_path:
         template_path = os.path.join(
@@ -32,24 +33,25 @@ def create_email_quality_checker_chain(llm=None, template_path=None):
             "format_instructions": parser.get_format_instructions()}
     )
 
-    return prompt | llm | parser
+    return prompt | llm
 
 
 def create_email_rewriter_chain(llm=None, template_path=None):
     """
     Chain that takes a spammy email and rewrites it to improve quality and reduce spam.
     """
-    llm or get_llm()
+    llm = llm or get_llm()
+    llm = llm.with_structured_output(RewrittenEmailOutput)
     parser = PydanticOutputParser(pydantic_object=RewrittenEmailOutput)
-    if not template_path:
-        template_path = os.path.join("app", "prompts", "email_rewrite.txt")
+    # if not template_path:
+    #     template_path = os.path.join("app", "prompts", "email_rewrite.txt")
     prompt = PromptTemplate(
         input_variables=["email_content"],
         template=load_template_from_file(template_path),
         partial_variables={
             "format_instructions": parser.get_format_instructions()}
     )
-    return prompt | llm | parser
+    return prompt | llm 
 
 
 def get_parallel_chain(llm=None,) -> RunnableParallel:

@@ -3,8 +3,16 @@ from chains import  get_llm , create_email_quality_checker_chain , create_email_
 from utils import is_html_email
 from llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
 from langchain_core.runnables import RunnableParallel
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
+
 app = Flask(__name__)
+LLM_MODEL = os.environ.get("LLM_MODEL", "gemini-2.5-flash")  # Default to gemini-2.5-flash if not set
+EMAIL_QUALITY_CHECK_PROMPT = os.environ.get("EMAIL_QUALITY_CHECK_PROMPT", "app/prompts/email_quality_check.txt")  # Default path for email quality check prompt
+EMAIL_REWRITE_HTML_PROMPT = os.environ.get("EMAIL_REWRITE_HTML_PROMPT", "app/prompts/email_rewrite_html.txt")  # Default path for email rewrite prompt
+EMAIL_REWRITE_TEXT_PROMPT = os.environ.get("EMAIL_REWRITE_TEXT_PROMPT", "app/prompts/email_rewrite.txt")  # Default path for email rewrite prompt
 
 @app.route("/")
 def home():
@@ -20,14 +28,14 @@ def analyze_email():
         return jsonify({"error": "email_content is required"}), 400
 
     try:
-        llm = get_llm()
+        llm = get_llm(model="gemini-2.5-flash")
 
-        quality_checker = create_email_quality_checker_chain(llm)
+        quality_checker = create_email_quality_checker_chain(llm,template_path=EMAIL_QUALITY_CHECK_PROMPT)
 
         if is_html_email(email_content):
-            rewriter = create_email_rewriter_chain(llm, template_path=os.path.join("app", "prompts", "email_rewrite_html.txt"))
+            rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_HTML_PROMPT)
         else:
-            rewriter = create_email_rewriter_chain(llm)
+            rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_TEXT_PROMPT)
 
         chain = RunnableParallel(
             {
@@ -60,14 +68,14 @@ def regenerate_email():
         # print('------------------------------------------ html_content:', html_content)
         if not html_content:
             return jsonify({'error': 'Missing html_content'}), 400
-        llm = get_llm()
+        llm = get_llm(model=LLM_MODEL)
         # Your LLM logic to regenerate a clean version
         if is_html_email(html_content):
-            rewriter = create_email_rewriter_chain(llm, template_path=os.path.join("app", "prompts", "email_rewrite_html.txt"))
+            rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_HTML_PROMPT)
         else:
-            rewriter = create_email_rewriter_chain(llm)
+            rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_TEXT_PROMPT)
         result:RewrittenEmailOutput = rewriter.invoke({"email_content": html_content})
-        print('------------------------',result.rewritten_email)
+        # print('------------------------',result.rewritten_email)
         return jsonify({
             'rewritten_email': result.rewritten_email,
             'improvements': [im.model_dump() for im in result.key_improvements],

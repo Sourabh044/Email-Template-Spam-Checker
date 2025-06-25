@@ -13,7 +13,7 @@
             <textarea class="form-control" placeholder="Enter Email Content" id="emailContent" name="email_content" style="height: 200px;" required></textarea>
             <label for="emailContent">Email Content</label>
         </div>
-        <input type="hidden" id="originalHtmlInput" name="originalHtml">
+        <input type="hidden" id="hiddenHtmlInput" name="hiddenHtml">
         <button type="submit" id="submitBtn" class="btn btn-primary">Analyze</button>
     </form>
 
@@ -27,7 +27,10 @@
         <div class="d-flex justify-content-between align-items-center mb-2">
             <label for="emailEditor" class="form-label mb-0">Rewritten Email (Editable)</label>
             <div>
-                <button class="btn btn-sm btn-primary me-2" onclick="updatePreview()"> <i class="bi bi-easel"></i> Preview Changes</button>
+                <!-- <button class="btn btn-sm btn-primary me-2" onclick="updatePreview()"> <i class="bi bi-easel"></i> Preview Changes</button> -->
+                
+                <button type="button" id="previewBtn" class="btn btn-sm btn-primary me-2"> <i class="bi bi-easel"></i> Preview</button>
+
                 <button class="btn btn-sm btn-secondary me-2" onclick="copyOriginalHtml()"> <i class="bi bi-copy"></i> Copy</button>
                 <button class="btn btn-sm btn-warning" onclick="regenerateEmail()"> <i class="bi bi-arrow-clockwise"></i> Regenerate</button>
             </div>
@@ -44,6 +47,55 @@
     <div id="resultsErrorOutput" style="display: none;"></div>
 
 </div>
+
+
+<!-- Email Preview Modal -->
+<div class="modal fade" id="emailPreviewModal" tabindex="-1" aria-labelledby="emailPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="emailPreviewModalLabel">Rewritten Email Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Render HTML here -->
+        <button class="btn btn-sm btn-secondary me-2" onclick="copyOriginalHtml()"> <i class="bi bi-copy"></i> Copy</button>
+        <iframe id="emailPreviewFrame" class="w-100 border rounded" style="min-height: 600px; border: 1px solid #ccc;"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("previewBtn").addEventListener("click", function () {
+    const htmlContent =`
+                            <!DOCTYPE html>
+                            <html>
+                            <head><meta charset="UTF-8"><style>body { font-family: Arial; }</style></head>
+                            <body>${tinymce.get("emailEditor").getContent()}</body>
+                            </html>
+                            `
+
+    const previewFrame = document.getElementById("emailPreviewFrame");
+    const doc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+
+    // Write content into iframe
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    // Show Bootstrap modal
+    const modal = new bootstrap.Modal(document.getElementById("emailPreviewModal"));
+    modal.show();
+});
+</script>
+
+
+
+
+
+
+
 
 
 <script>
@@ -66,10 +118,16 @@
 
 
     async function regenerateEmail() {
-        //const currentHTML = tinymce.get('emailEditor').getContent();
-        const currentHTML = document.getElementById("originalHtmlInput").value;
+        const currentHTML = `
+                            <!DOCTYPE html>
+                            <html>
+                            <head><meta charset="UTF-8"><style>body { font-family: Arial; }</style></head>
+                            <body>${tinymce.get("emailEditor").getContent()}</body>
+                            </html>
+                            `
+        //const currentHTML = document.getElementById("hiddenHtmlInput").value;
         const improvementsCard = document.getElementById("improvementsCard");
-        const originalHtmlInput = document.getElementById("originalHtmlInput");
+        const hiddenHtmlInput = document.getElementById("hiddenHtmlInput");
         try {
             showLoader();
             const response = await fetch('/regenerate-email', {
@@ -88,7 +146,7 @@
                 tinymce.get('emailEditor').setContent(data.rewritten_email);
                 updatePreview();
                 improvementsCard.innerHTML = `
-                <div class="card-header bg-primary text-white">Key Improvements</div>
+                <div class="card-header bg-primary text-white animate__animated" id="keyImprovementsHeading">Key Improvements</div>
                         <div class="card-body">
                             ${
                                 data.improvements.length > 0
@@ -102,8 +160,15 @@
                             }
                         </div>
                 `
-                originalHtmlInput.value = data.rewritten_email || "";
+                hiddenHtmlInput.value = data.rewritten_email || "";
+                improvementsCard.scrollIntoView({ behavior: 'smooth' });
+                improvementsCard.classList.remove("animate__fadeIn");
+                improvementsCard.classList.add("animate__fadeIn");
+                const keyImprovementsHeading = document.getElementById("keyImprovementsHeading");
+                keyImprovementsHeading.classList.remove("animate__bounce");
+                keyImprovementsHeading.classList.add("animate__bounce");
                 hideLoader();
+                toastr['success']("Email regenerated successfully!");
             } else {
                 toastr['error']("Regeneration failed: " + (data.error || "Unknown error"));
                 hideLoader();
@@ -113,8 +178,6 @@
             hideLoader();
         }
     }
-
-
 
     function updatePreview() {
             const html = tinymce.get('emailEditor').getContent();
@@ -138,9 +201,17 @@
     }
     
     function copyOriginalHtml() {
-        const input = document.getElementById("originalHtmlInput");
+        const input = document.getElementById("hiddenHtmlInput");
+        const htmlContent =`
+                            <!DOCTYPE html>
+                            <html>
+                            <head><meta charset="UTF-8"><style>body { font-family: Arial; }</style></head>
+                            <body>${tinymce.get("emailEditor").getContent()}</body>
+                            </html>
+                            `
+        console.log("Copying HTML content:", htmlContent);
         if (input) {
-            navigator.clipboard.writeText(input.value)
+            navigator.clipboard.writeText(htmlContent)
                 .then(() => {
                     toastr['success']("Copied to Clipboard")
                 })
@@ -156,7 +227,7 @@
     const button = document.getElementById("submitBtn");
     const resultSection = document.getElementById("resultSection");
     const resultsErrorOutput = document.getElementById("resultsErrorOutput");
-    const originalHtmlInput = document.getElementById("originalHtmlInput");
+    const hiddenHtmlInput = document.getElementById("hiddenHtmlInput");
 
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -188,14 +259,14 @@
                 const rewritten_data = JSON.parse(data.rewritten_email)
                 const rewritten = rewritten_data.rewritten_email;
                 const improvements = rewritten_data.key_improvements || [];
-                originalHtmlInput.value = rewritten || "";
+                hiddenHtmlInput.value = rewritten || "";
 
                 console.log(parsedQuality)
                 console.log(rewritten_data)
                 // Build HTML dynamically
                 parsedResults.innerHTML = `
                     <div class="mb-3">
-                        <h5 class="text-primary">Spam Score: <span class="badge bg-danger">${parsedQuality.spam_score}</span></h5>
+                        <h5 class="text-primary animate__animated animate__slideInLeft">Spam Score: <span class="badge bg-danger">${parsedQuality.spam_score}</span></h5>
                     </div>
 
                     <div class="mb-3">
@@ -219,7 +290,7 @@
                         </div>
                     </div>
 
-                    <div class="card" id="improvementsCard">
+                    <div class="card animate__animated" id="improvementsCard">
                         <div class="card-header bg-primary text-white">Key Improvements</div>
                         <div class="card-body">
                             ${
@@ -243,7 +314,7 @@
                 tinymce.get('emailEditor').setContent(rewritten);
                 updatePreview(); // Optional: show preview immediately
                 editorContainer.classList.remove("d-none");
-                livePreviewContainer.classList.remove("d-none");
+                //livePreviewContainer.classList.remove("d-none");
                 resultSection.scrollIntoView({ behavior: 'smooth' });
             }
             else {
@@ -260,7 +331,7 @@
         button.disabled = false;
         button.textContent = "Analyze";
         hideLoader();
-        resultSection.focus()
+        resultSection.scrollIntoView({ behavior: 'smooth' });
     });
 </script>
 

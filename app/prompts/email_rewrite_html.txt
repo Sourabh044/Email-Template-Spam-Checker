@@ -13,8 +13,8 @@ Avoid:
 - Overly urgent language (like “Act now!”)
 
 Use friendly, polite, professional tone and generate HTML.
-Respond ONLY with raw JSON. Do not wrap the response in markdown blocks like ```json.
-{format_instructions}
+
+
 
 Original HTML Email:
 ---------------------

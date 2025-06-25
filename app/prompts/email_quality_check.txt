@@ -3,8 +3,7 @@ You are an expert email quality checker.
 Analyze the following email and give a 'Spam Score' between 0 (not spammy) and 100 (very spammy).
 
 Also, list down the good and spammy words/phrases used in the email.
-Respond ONLY with raw JSON. Do not wrap the response in markdown blocks like ```json. Make sure all double quotes in HTML attributes are properly escaped
-{format_instructions}
+
 
 Email Content:
 ------------------
