@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
-from chains import  get_llm , create_email_quality_checker_chain , create_email_rewriter_chain
-from utils import is_html_email
-from llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
+from app.chains import  get_llm , create_email_quality_checker_chain , create_email_rewriter_chain
+from app.utils import is_html_email
+from app.llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
 from langchain_core.runnables import RunnableParallel
 from dotenv import load_dotenv
 import os

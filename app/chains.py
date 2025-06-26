@@ -1,6 +1,6 @@
 import os
-from utils import load_template_from_file
-from llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
+from app.utils import load_template_from_file
+from app.llm_response_schemas import EmailQualityOutput, RewrittenEmailOutput
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableParallel
