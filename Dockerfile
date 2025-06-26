@@ -26,7 +26,7 @@ EXPOSE 5000
 # Run the Flask application
 # Using 'flask run' is convenient for development, but for production,
 # a WSGI server like Gunicorn is recommended.
-CMD ["flask", "run"]
+# CMD ["flask", "run"]
 
 # To use Gunicorn (recommended for production):
 # 1. Add gunicorn to your requirements.txt

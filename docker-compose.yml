@@ -1,0 +1,26 @@
+version: '3.8' # Specify the Docker Compose file format version
+
+services:
+  # Define a service for your Flask application
+  flask_app:
+    # Build the image using the Dockerfile in the current directory (where docker-compose.yml is)
+    build:
+      context: . # The build context is the current directory
+      dockerfile: Dockerfile # Specify the Dockerfile name (optional if named 'Dockerfile')
+    # Map port 5000 from the container to port 5000 on the host machine
+    ports:
+      - "5000:5000"
+    # Set environment variables required by your Flask app
+    environment:
+      FLASK_APP: app.main # Specifies the main Flask application entry point
+      FLASK_RUN_HOST: 0.0.0.0 # Allows the Flask server to be accessible from outside the container
+    # This command will be used to start the container, overriding the CMD in Dockerfile if specified
+    # However, since Flask's CMD is already suitable, we can omit it or keep it for clarity.
+    command: flask run # This is what your Dockerfile already does
+    # Mount the local application directory into the container.
+    # This is useful for development as changes in your code are reflected without rebuilding the image.
+    volumes:
+      - ./app:/app/app # Maps your local 'app' directory to '/app/app' inside the container
+      - ./requirements.txt:/app/requirements.txt # Ensure requirements are also linked if using volumes
+    # If you enable volumes, you might need to adjust the PYTHONPATH in the Dockerfile
+    # or rely on the Flask reloader, but for simplicity, we'll stick to image-based for now.

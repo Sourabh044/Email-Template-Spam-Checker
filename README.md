@@ -50,14 +50,8 @@ pip install -r requirements.txt # or uv sync
 
 ## Docker
 
-1. build docker.
+1. Command
 
 ```bash
-docker build -t email-analyzer .
-```
-
-2. Run docker image
-
-```bash
-    docker run -p 5000:5000 email-analyzer
+docker compose up --build
 ```
