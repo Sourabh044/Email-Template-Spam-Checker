@@ -263,10 +263,11 @@ document.getElementById("previewBtn").addEventListener("click", function () {
 
                 console.log(parsedQuality)
                 console.log(rewritten_data)
+                const spamBadgeClass = parsedQuality.spam_score > 80 ? 'bg-danger' : 'bg-success';
                 // Build HTML dynamically
                 parsedResults.innerHTML = `
                     <div class="mb-3">
-                        <h5 class="text-primary animate__animated animate__slideInLeft">Spam Score: <span class="badge bg-danger">${parsedQuality.spam_score}</span></h5>
+                        <h5 class="text-primary animate__animated animate__slideInLeft">Spam Score: <span class="badge ${spamBadgeClass}">${parsedQuality.spam_score}</span></h5>
                     </div>
 
                     <div class="mb-3">

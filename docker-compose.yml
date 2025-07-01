@@ -10,6 +10,8 @@ services:
     # Map port 5000 from the container to port 5000 on the host machine
     ports:
       - "5000:5000"
+    env_file:
+      - .env
     # Set environment variables required by your Flask app
     environment:
       FLASK_APP: app.main # Specifies the main Flask application entry point

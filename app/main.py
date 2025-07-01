@@ -9,7 +9,7 @@ import os
 load_dotenv()
 
 app = Flask(__name__)
-LLM_MODEL = os.environ.get("LLM_MODEL", "gemini-2.5-flash")  # Default to gemini-2.5-flash if not set
+LLM_MODEL = os.environ.get("LLM_MODEL", "gemini-2.5-pro")  # Default to gemini-2.5-flash if not set
 EMAIL_QUALITY_CHECK_PROMPT = os.environ.get("EMAIL_QUALITY_CHECK_PROMPT", "app/prompts/email_quality_check.txt")  # Default path for email quality check prompt
 EMAIL_REWRITE_HTML_PROMPT = os.environ.get("EMAIL_REWRITE_HTML_PROMPT", "app/prompts/email_rewrite_html.txt")  # Default path for email rewrite prompt
 EMAIL_REWRITE_TEXT_PROMPT = os.environ.get("EMAIL_REWRITE_TEXT_PROMPT", "app/prompts/email_rewrite.txt")  # Default path for email rewrite prompt
@@ -28,8 +28,7 @@ def analyze_email():
         return jsonify({"error": "email_content is required"}), 400
 
     try:
-        llm = get_llm(model="gemini-2.5-flash")
-
+        llm = get_llm(model=LLM_MODEL)
         quality_checker = create_email_quality_checker_chain(llm,template_path=EMAIL_QUALITY_CHECK_PROMPT)
 
         if is_html_email(email_content):
