@@ -40,13 +40,13 @@ Your final output must be structured in Markdown exactly as follows. Do not add 
 ### **Detailed Content Analysis**
 
 **1. Spam Trigger Elements (Negative Impact):**
-*   List the specific words, phrases, or formatting choices that negatively impact the score. For each item, provide a brief explanation of *why* it's a potential spam trigger.
-*   *Example: "- **'Click Here Now!!!':** This phrase combines a high-pressure call-to-action with excessive punctuation, a classic spam pattern."*
+*   List the specific words, phrases that negatively impact the score.
+*   *Example: "- 'Click Here Now!!!'"
 *   If no negative elements are found, state "None found."
 
 **2. Positive Quality Elements (Positive Impact):**
-*   List specific elements that are good for deliverability. This could be a clear value proposition, personalization, or adherence to best practices.
-*   *Example: "- **Clear Unsubscribe Link:** The presence of an easy-to-find unsubscribe link is a strong positive signal."*
+*   List specific specific words, phrases that are good for deliverability. This could be a clear value proposition, personalization, or adherence to best practices.
+*   *Example: "- Clear Unsubscribe Link"
 *   If no positive elements are found, state "None found."
 
 ---

@@ -31,26 +31,26 @@ def analyze_email():
         llm = get_llm(model=LLM_MODEL)
         quality_checker = create_email_quality_checker_chain(llm,template_path=EMAIL_QUALITY_CHECK_PROMPT)
 
-        if is_html_email(email_content):
-            rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_HTML_PROMPT)
-        else:
-            rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_TEXT_PROMPT)
+        # if is_html_email(email_content):
+        #     rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_HTML_PROMPT)
+        # else:
+        #     rewriter = create_email_rewriter_chain(llm=llm,template_path=EMAIL_REWRITE_TEXT_PROMPT)
 
         chain = RunnableParallel(
             {
                 "quality_check": quality_checker,
-                "rewritten_email": rewriter,
+                # "rewritten_email": rewriter,
             }
         )
         result = chain.invoke({"email_content": email_content})
         # print(result)  # Debugging output
 
         raw_quality_check: EmailQualityOutput | str = result.get("quality_check", "")
-        raw_rewritten: RewrittenEmailOutput | str = result.get("rewritten_email", "")
+        # raw_rewritten: RewrittenEmailOutput | str = result.get("rewritten_email", "")
 
         response = {
             "quality_check": raw_quality_check.model_dump_json(),
-            "rewritten_email": raw_rewritten.model_dump_json()
+            # "rewritten_email": raw_rewritten.model_dump_json()
         }
 
         return jsonify(response), 200

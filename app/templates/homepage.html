@@ -256,7 +256,7 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                 const parsedQuality = JSON.parse(data.quality_check);
 
                 // Extract the structured rewritten response
-                const rewritten_data = JSON.parse(data.rewritten_email)
+                const rewritten_data = JSON.parse(data.rewritten_email || '{}')
                 const rewritten = rewritten_data.rewritten_email;
                 const improvements = rewritten_data.key_improvements || [];
                 hiddenHtmlInput.value = rewritten || "";
@@ -291,7 +291,7 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                         </div>
                     </div>
 
-                    <div class="card animate__animated" id="improvementsCard">
+                    <div class="card animate__animated d-none" id="improvementsCard">
                         <div class="card-header bg-primary text-white">Key Improvements</div>
                         <div class="card-body">
                             ${
@@ -312,9 +312,9 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                 
                 // Populate TinyMCE editor after receiving response
                 //console.log('updating tinymce editor with:', rewritten);
-                tinymce.get('emailEditor').setContent(rewritten);
-                updatePreview(); // Optional: show preview immediately
-                editorContainer.classList.remove("d-none");
+                //tinymce.get('emailEditor').setContent(rewritten);
+                //updatePreview(); // Optional: show preview immediately
+                //editorContainer.classList.remove("d-none");
                 //livePreviewContainer.classList.remove("d-none");
                 resultSection.scrollIntoView({ behavior: 'smooth' });
             }
@@ -323,6 +323,7 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                 resultsErrorOutput.style.display = "block";
             }
         } catch (error) {
+            console.error(error)
             resultsErrorOutput.textContent = "Network error: " + error.message;
             resultsErrorOutput.style.display = "block";
         }
