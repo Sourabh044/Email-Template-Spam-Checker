@@ -10,11 +10,19 @@
 <div class="container mt-4">
     <form id="emailForm">
         <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="emailSubject" placeholder="Enter Subject" required>
+            <label for="emailSubject">Email Subject</label>
+        </div>
+        <div class="form-floating mb-3">
             <textarea class="form-control" placeholder="Enter Email Content" id="emailContent" name="email_content" style="height: 200px;" required></textarea>
             <label for="emailContent">Email Content</label>
         </div>
         <input type="hidden" id="hiddenHtmlInput" name="hiddenHtml">
-        <button type="submit" id="submitBtn" class="btn btn-primary">Analyze</button>
+        <div class="d-flex justify-content-end">
+        <button type="submit" id="submitBtn" class="btn btn-primary px-4">
+            Analyze
+        </button>
+</div>
     </form>
 
     <div id="resultSection" class="mt-4" style="display: none;">
@@ -24,6 +32,10 @@
 
     <!-- Editor Container -->
     <div class="mt-4 d-none" id="editorContainer">
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="rewrittenEmailSubjectInput" placeholder="Enter Subject" required>
+            <label for="rewrittenEmailSubjectInput">Rewritten Email Subject</label>
+        </div>
         <div class="d-flex justify-content-between align-items-center mb-2">
             <label for="emailEditor" class="form-label mb-0">Rewritten Email (Editable)</label>
             <div>
@@ -35,6 +47,7 @@
                 <button class="btn btn-sm btn-warning" onclick="regenerateEmail()"> <i class="bi bi-arrow-clockwise"></i> Regenerate</button>
             </div>
         </div>
+        
         <textarea id="emailEditor" class="form-control" rows="10"></textarea>
     </div>
 
@@ -224,10 +237,12 @@ document.getElementById("previewBtn").addEventListener("click", function () {
     
     const form = document.getElementById("emailForm");
     const textarea = document.getElementById("emailContent");
+    const subjecttextarea = document.getElementById("emailSubject");
     const button = document.getElementById("submitBtn");
     const resultSection = document.getElementById("resultSection");
     const resultsErrorOutput = document.getElementById("resultsErrorOutput");
     const hiddenHtmlInput = document.getElementById("hiddenHtmlInput");
+    const rewrittenEmailSubjectInput = document.getElementById('rewrittenEmailSubjectInput');
 
     form.addEventListener("submit", async function (e) {
         e.preventDefault();
@@ -244,7 +259,8 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    email_content: textarea.value
+                    email_content: textarea.value,
+                    email_subject: subjecttextarea.value
                 })
             });
 
@@ -258,12 +274,22 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                 // Extract the structured rewritten response
                 const rewritten_data = JSON.parse(data.rewritten_email || '{}')
                 const rewritten = rewritten_data.rewritten_email;
+                const rewrittenEmailSubject = rewritten_data.rewritten_subject || '';
                 const improvements = rewritten_data.key_improvements || [];
                 hiddenHtmlInput.value = rewritten || "";
 
                 console.log(parsedQuality)
                 console.log(rewritten_data)
-                const spamBadgeClass = parsedQuality.spam_score > 80 ? 'bg-danger' : 'bg-success';
+                const score = parsedQuality.spam_score;
+                if (score <= 25) {
+                        spamBadgeClass = 'bg-success'; // Green
+                } else if (score <= 50) {
+                    spamBadgeClass = 'bg-warning text-dark'; // Yellow
+                } else if (score <= 75) {
+                    spamBadgeClass = 'bg-orange'; // Custom Orange (see note below)
+                } else {
+                    spamBadgeClass = 'bg-danger'; // Red
+                }
                 // Build HTML dynamically
                 parsedResults.innerHTML = `
                     <div class="mb-3">
@@ -272,7 +298,7 @@ document.getElementById("previewBtn").addEventListener("click", function () {
 
                     <div class="mb-3">
                         <strong>Spammy Phrases:</strong><br>
-                        ${parsedQuality.spammy_phrases.map(word => `<span class="badge bg-warning text-dark me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
+                        ${parsedQuality.spammy_phrases.map(word => `<span class="badge bg-danger text-light me-1 mb-1">${word}</span>`).join(' ') || '<em>None</em>'}
                     </div>
 
                     <div class="mb-3">
@@ -312,9 +338,10 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                 
                 // Populate TinyMCE editor after receiving response
                 //console.log('updating tinymce editor with:', rewritten);
-                //tinymce.get('emailEditor').setContent(rewritten);
-                //updatePreview(); // Optional: show preview immediately
-                //editorContainer.classList.remove("d-none");
+                tinymce.get('emailEditor').setContent(rewritten);
+                rewrittenEmailSubjectInput.value =rewrittenEmailSubject
+                updatePreview(); // Optional: show preview immediately
+                editorContainer.classList.remove("d-none");
                 //livePreviewContainer.classList.remove("d-none");
                 resultSection.scrollIntoView({ behavior: 'smooth' });
             }

@@ -13,4 +13,5 @@ class Improvement(BaseModel):
 
 class RewrittenEmailOutput(BaseModel):
     rewritten_email: str = Field(description="The rewritten email content that improves quality and reduces spamminess.")
+    rewritten_subject: str = Field(description="The rewritten email subject that improves quality and reduces spamminess.")
     key_improvements: List[Improvement]

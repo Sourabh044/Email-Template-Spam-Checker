@@ -5,7 +5,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableParallel
 from langchain_core.output_parsers import PydanticOutputParser
-
+from langchain.chains import LLMChain
 
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
@@ -15,7 +15,7 @@ def get_llm(model="gemma-3n-e4b-it", temperature=0.7, api_key=GOOGLE_API_KEY):
     return ChatGoogleGenerativeAI(model=model, temperature=temperature, api_key=api_key)
 
 
-def create_email_quality_checker_chain(llm=None, template_path=None):
+def create_email_quality_checker_chain(llm=None, template_path=None,memory = None):
     """
     Chain that analyzes email content and gives a spamminess score (0-100),
     along with explanation.
@@ -32,7 +32,14 @@ def create_email_quality_checker_chain(llm=None, template_path=None):
         partial_variables={
             "format_instructions": parser.get_format_instructions()}
     )
-
+    if memory:
+        return LLMChain(
+        llm=llm,
+        prompt=prompt,
+        memory=memory,
+        output_parser=parser,
+        verbose=True  # Optional: Helps in debugging
+    )
     return prompt | llm
 
 
