@@ -79,7 +79,12 @@
   </div>
 </div>
 
+{% include "includes/chatbot.html" %}
+
+
+
 <script>
+
 document.getElementById("previewBtn").addEventListener("click", function () {
     const htmlContent =`
                             <!DOCTYPE html>
@@ -292,9 +297,17 @@ document.getElementById("previewBtn").addEventListener("click", function () {
                 }
                 // Build HTML dynamically
                 parsedResults.innerHTML = `
-                    <div class="mb-3">
-                        <h5 class="text-primary animate__animated animate__slideInLeft">Spam Score: <span class="badge ${spamBadgeClass}">${parsedQuality.spam_score}</span></h5>
+                    <div class="mb-3 d-flex align-items-center gap-3 animate__animated animate__slideInLeft">
+                        <h5 class="text-primary mb-0">
+                            Spam Score:
+                            <span class="badge ${spamBadgeClass}">${parsedQuality.spam_score}</span>
+                        </h5>
+                        <h6 class="text-muted mb-0">
+                            Type:
+                            <span class="badge bg-secondary">${parsedQuality.classification}</span>
+                        </h6>
                     </div>
+
 
                     <div class="mb-3">
                         <strong>Spammy Phrases:</strong><br>

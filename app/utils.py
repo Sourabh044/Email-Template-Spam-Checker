@@ -1,6 +1,6 @@
 import json
 import re
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup , Comment
 
 
 def is_html_email(content: str) -> bool:
@@ -68,3 +68,39 @@ def clean_llm_response(raw_output: str) -> dict:
             "rewritten_email": raw_output,
             "key_improvements": []
         }
+
+
+
+def extract_text_from_html_email(html_content: str) -> str:
+    """
+    Extracts and cleans visible text from an HTML email template.
+    
+    Args:
+        html_content (str): Raw HTML email content
+    
+    Returns:
+        str: Clean, readable text
+    """
+    soup = BeautifulSoup(html_content, "html.parser")
+
+    # Remove script, style, and head sections
+    for tag in soup(["script", "style", "head", "title", "meta", "link"]):
+        tag.decompose()
+
+    # Optional: remove comments
+    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+        comment.extract()
+
+    # Get text
+    text = soup.get_text(separator="\n")
+
+    # Remove leading/trailing whitespace, excessive newlines/spaces
+    lines = [line.strip() for line in text.splitlines()]
+    non_empty_lines = [line for line in lines if line]
+    cleaned_text = "\n".join(non_empty_lines)
+
+    # Optional: collapse multiple spaces and line breaks
+    cleaned_text = re.sub(r'\s{2,}', ' ', cleaned_text)
+    cleaned_text = re.sub(r'\n{2,}', '\n', cleaned_text)
+
+    return cleaned_text.strip()

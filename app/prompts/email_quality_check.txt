@@ -70,6 +70,9 @@ Explain how each score element was added/subtracted using the rubric. Quantify c
 - Contains value proposition → −5
 - Final Score = 10 + 15 + 20 − 5 = 40
 
+Classification
+classify this email into one of the following categories: Cold Outreach, Promotional, Transactional, Newsletter, Follow-up, Personal.
+
 -------------------------------------------------------
 ORIGINAL EMAIL SUBJECT:
 {email_subject}

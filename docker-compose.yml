@@ -19,7 +19,8 @@ services:
       FLASK_DEBUG: ${FLASK_DEBUG}
     # This command will be used to start the container, overriding the CMD in Dockerfile if specified
     # However, since Flask's CMD is already suitable, we can omit it or keep it for clarity.
-    command: flask run # This is what your Dockerfile already does
+    command: uvicorn app.main:app --reload 
+    # This is what your Dockerfile already does
     # Mount the local application directory into the container.
     # This is useful for development as changes in your code are reflected without rebuilding the image.
     volumes:

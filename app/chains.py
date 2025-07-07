@@ -83,6 +83,22 @@ def run_both_chains(email_content):
     """
     return get_parallel_chain().invoke({"email_content": email_content})
 
+def create_email_chat_chain(llm):
+    prompt = PromptTemplate(
+        input_variables=["question"],
+        template=(
+            "You are an email expert assistant. The user provided the following email:\n\n"
+            "{email_content}\n\n"
+            "Now, answer the following question about the email:\n\n"
+            "{question}"
+        )
+    )
+    chain = prompt | llm
+    return chain
+
+
+
+
 
 def main():
     # Sample email (you can replace this with dynamic input)

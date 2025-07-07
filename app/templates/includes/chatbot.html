@@ -1,0 +1,209 @@
+<!-- 💬 Floating Chat Button -->
+<div id="chatbot-toggle" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <button class="btn btn-primary rounded-circle p-3 shadow" title="Open Email Assistant">
+        💬
+    </button>
+</div>
+
+<!-- 🧠 Chatbot Window -->
+<div id="chatbot-window" class="card shadow-lg" style="display: none; flex-direction: column; width: 100%; max-width: 360px; height: 480px; position: fixed; bottom: 20px; right: 20px; z-index: 10000; border-radius: 16px; overflow: hidden;">
+
+    <!-- Header -->
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2 px-3">
+        <span style="font-size: 0.9rem;">📬 Email Assistant</span>
+        <button id="chatbot-close" class="btn btn-sm btn-light" style="font-size: 0.8rem;">&times;</button>
+    </div>
+
+    <!-- Body (flex-grow) -->
+    <div class="flex-grow-1 d-flex flex-column justify-content-between" style="overflow: hidden;">
+        
+        <!-- Messages container -->
+        <div id="chatbot-messages" class="p-2" style="flex-grow: 1; overflow-y: auto; font-size: 0.85rem;"></div>
+
+        <!-- Suggestions and input area -->
+        <div class="p-2 border-top bg-light">
+            
+            <!-- Suggestions -->
+            <div id="chatbot-suggestions" class="mb-2 d-flex flex-wrap gap-1">
+                <button class="btn btn-sm btn-outline-secondary suggestion-btn">Why is this spam?</button>
+                <button class="btn btn-sm btn-outline-secondary suggestion-btn">Improve subject line</button>
+                <button class="btn btn-sm btn-outline-secondary suggestion-btn">Make it formal</button>
+                <button class="btn btn-sm btn-outline-secondary suggestion-btn">Shorten it</button>
+            </div>
+
+            <!-- Chat input -->
+            <form id="chatbot-form" class="d-flex gap-2">
+                <input type="text" id="chatbot-input" class="form-control form-control-sm" placeholder="Ask something..." style="font-size: 0.85rem;" />
+                <button type="submit" class="btn btn-sm btn-primary">Send</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- <style>
+    #chatbot-window {
+    transition: all 0.3s ease-in-out;
+}
+
+#chatbot-messages::-webkit-scrollbar {
+    width: 6px;
+}
+#chatbot-messages::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+}
+
+</style> -->
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const toggleBtn = document.getElementById("chatbot-toggle");
+    const chatbotWindow = document.getElementById("chatbot-window");
+    const closeBtn = document.getElementById("chatbot-close");
+
+    toggleBtn.addEventListener("click", () => {
+        chatbotWindow.style.display = "flex"; // ✅ force flex layout
+        toggleBtn.style.display = "none";
+    });
+
+    closeBtn.addEventListener("click", () => {
+        chatbotWindow.style.display = "none";
+        toggleBtn.style.display = "block";
+    });
+});
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("chatbot-form");
+    const input = document.getElementById("chatbot-input");
+    const messagesContainer = document.getElementById("chatbot-messages");
+    const suggestionButtons = document.querySelectorAll(".suggestion-btn");
+    const toggleBtn = document.getElementById("chatbot-toggle");
+    const chatbotWindow = document.getElementById("chatbot-window");
+    const closeBtn = document.getElementById("chatbot-close");
+    
+    // ✅ Set this somewhere globally or via hidden input — should be the plain extracted text
+    let extractedEmailText = "";  // <-- Assign this via backend or dynamically on page load
+    
+    suggestionButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            input.value = btn.textContent;
+            form.dispatchEvent(new Event("submit"));
+        });
+    });
+
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        //const extractedEmailText = tinymce.get("emailEditor").getContent()
+        const extractedEmailText = document.getElementById("emailContent")?.value?.trim() || "";
+        console.log("Extracted Email Text:", extractedEmailText);
+        const userMessage = input.value.trim();
+        if (!userMessage) {
+            return;
+        }
+        if (!extractedEmailText) {
+            toastr.warning("Please submit an email first.");
+            return;
+        }
+
+        // Append user's message to UI
+        appendMessage("user", userMessage);
+        input.value = "";
+        scrollToBottom();
+        
+        appendLoader();
+        input.disabled = true;
+        toggleSuggestions(false);
+
+        try {
+            // Hit the FastAPI endpoint
+            const response = await fetch("/chat-email-helper", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email_content: extractedEmailText,
+                    question: userMessage,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                appendMessage("bot", data.response);
+            } else {
+                appendMessage("bot", "⚠️ Error: " + (data.detail || "Something went wrong"));
+            }
+        } catch (error) {
+            appendMessage("bot", "❌ Network error. Please try again.");
+            console.error(error);
+        }
+        input.disabled = false;
+        toggleSuggestions(true);
+        scrollToBottom();
+    });
+
+    function appendMessage(sender, message) {
+        const bubble = document.createElement("div");
+        bubble.className = sender === "user" ? "text-end mb-2" : "text-start mb-2";
+
+        bubble.innerHTML = `
+            <div class="p-2 rounded ${sender === "user" ? 'bg-primary text-white' : 'bg-light text-dark'} d-inline-block">
+                ${escapeHTML(message)}
+            </div>
+        `;
+
+        messagesContainer.appendChild(bubble);
+    }
+
+    function scrollToBottom() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Basic sanitization
+    function escapeHTML(str) {
+        return str.replace(/[&<>"']/g, function (match) {
+            return {
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            }[match];
+        });
+    }
+
+    function appendLoader() {
+        const loader = document.createElement("div");
+        loader.id = "typing-loader";
+        loader.className = "text-start mb-2";
+        loader.innerHTML = `
+            <div class="p-2 rounded bg-light text-dark d-inline-block">
+                <span class="typing-dots">
+                    <span>.</span><span>.</span><span>.</span>
+                </span> typing...
+            </div>
+        `;
+        messagesContainer.appendChild(loader);
+    }
+
+    function removeLoader() {
+        const loader = document.getElementById("typing-loader");
+        if (loader) loader.remove();
+    }
+
+    function toggleSuggestions(enable) {
+        suggestionButtons.forEach(btn => {
+            btn.disabled = !enable;
+        });
+    }
+
+
+});
+
+
+
+</script>

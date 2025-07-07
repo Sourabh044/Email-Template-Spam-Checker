@@ -6,6 +6,7 @@ class EmailQualityOutput(BaseModel):
     spammy_phrases: List[str] = Field(description="List of phrases in the email that contribute to its spamminess.")
     good_phrases: List[str] = Field(description="List of phrases in the email that contribute to its quality.")
     comments: str = Field(description="Comments on the overall quality of the email, including suggestions for improvement.")
+    classification: str = Field(description="Classification of the email based on the analysis.")
 
 class Improvement(BaseModel):
     title: str = Field(description="Title of the improvement made to the email.")
@@ -15,3 +16,7 @@ class RewrittenEmailOutput(BaseModel):
     rewritten_email: str = Field(description="The rewritten email content that improves quality and reduces spamminess.")
     rewritten_subject: str = Field(description="The rewritten email subject that improves quality and reduces spamminess.")
     key_improvements: List[Improvement]
+
+class ChatRequest(BaseModel):
+    email_content: str = Field(description="The content of the email")
+    question: str = Field(description="The question to ask about the email content")
